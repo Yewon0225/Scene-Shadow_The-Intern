@@ -1,0 +1,6 @@
+{
+  "name": "Scene Shadow: The Intern",
+  "description": "A movie-clip shadowing practice app for English learners using scenes from The Intern (2015).",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
