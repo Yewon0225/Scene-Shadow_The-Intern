@@ -1,10 +1,10 @@
 import React from 'react';
 import { MOVIE_DATA } from '../types';
-import { Play, Settings, ExternalLink, Sparkles, BookOpen, Film, ShieldCheck } from 'lucide-react';
+import { Play, ExternalLink, Sparkles, Film, ShieldCheck } from 'lucide-react';
 
 interface Props {
   onStart: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   sentenceCount: number;
 }
 
@@ -20,21 +20,15 @@ export const StartScreen: React.FC<Props> = ({ onStart, onEdit, sentenceCount })
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-950 mb-2 font-serif">
           Scene Shadow
         </h1>
-        <div className="text-xl font-bold text-neutral-800 tracking-wide mb-2">
+        <div className="text-xl font-bold text-neutral-800 tracking-wide">
           {MOVIE_DATA.titleEn} <span className="text-sm font-normal text-neutral-500">({MOVIE_DATA.titleKo})</span>
         </div>
-        <p className="text-base sm:text-lg font-medium text-neutral-600 max-w-sm mx-auto">
-          "Listen. Copy. Speak at the same time."
-        </p>
       </div>
 
       {/* Movie Scene Brief Card */}
       <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 sm:p-5 flex flex-col gap-2 shadow-xs">
         <div className="flex items-center justify-between text-xs text-neutral-500 font-medium">
           <span>Scene Clip · {MOVIE_DATA.year}</span>
-          <span className="bg-neutral-200/80 text-neutral-700 px-2 py-0.5 rounded-full font-mono">
-            0:01 – 0:42
-          </span>
         </div>
         <p className="text-sm text-neutral-700 leading-snug">
           {MOVIE_DATA.sceneDescription}
@@ -105,14 +99,6 @@ export const StartScreen: React.FC<Props> = ({ onStart, onEdit, sentenceCount })
           <span className="text-xs font-normal text-neutral-300">
             연습 시작 ({sentenceCount} Sentences)
           </span>
-        </button>
-
-        <button
-          onClick={onEdit}
-          className="w-full min-h-[48px] py-2.5 px-4 rounded-xl border border-neutral-300 bg-white text-neutral-800 font-semibold text-sm hover:bg-neutral-50 active:bg-neutral-100 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Settings className="w-4 h-4 text-neutral-600" />
-          <span>Edit Sentences / 문장 편집</span>
         </button>
       </div>
 

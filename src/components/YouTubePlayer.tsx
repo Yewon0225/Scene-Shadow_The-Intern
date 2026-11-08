@@ -10,6 +10,8 @@ export interface YouTubePlayerHandle {
   seekTo: (seconds: number) => void;
   getCurrentTime: () => number;
   setSpeed: (rate: number) => void;
+  setVolume: (volume: number) => void;
+  getVolume: () => number;
   stopSegmentTracking: () => void;
 }
 
@@ -258,6 +260,21 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, Props>(
           if (playerRef.current?.setPlaybackRate) {
             playerRef.current.setPlaybackRate(rate);
           }
+        },
+        setVolume: (volume: number) => {
+          if (playerRef.current?.setVolume) {
+            playerRef.current.setVolume(Math.max(0, Math.min(100, volume)));
+          }
+        },
+        getVolume: () => {
+          if (playerRef.current?.getVolume) {
+            try {
+              return playerRef.current.getVolume();
+            } catch (e) {
+              return 100;
+            }
+          }
+          return 100;
         },
         stopSegmentTracking: () => {
           if (segmentRef.current.loopTimer) {

@@ -23,6 +23,9 @@ import {
   Smile,
   Meh,
   Check,
+  Headphones,
+  Sliders,
+  Volume1,
 } from 'lucide-react';
 
 interface Props {
@@ -90,14 +93,21 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
   const [isKoreanHidden, setIsKoreanHidden] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [movieVolume, setMovieVolume] = useState<number>(75); // 75% optimal balance for shadowing
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [showAudioSettings, setShowAudioSettings] = useState(false);
 
-  // Audio Recorder hook
+  // Audio Recorder hook with voice normalization & boosted playback
   const {
     isRecording,
+    isProcessing,
     isMicDenied,
     hasRecording,
     isPlayingRecorded,
+    micProfile,
+    setMicProfile,
+    playbackBoost,
+    setPlaybackBoost,
     startRecording,
     stopRecording,
     playRecordedAudio,
@@ -143,6 +153,9 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
     const loop = loopOverride !== undefined ? loopOverride : isLooping;
     setIsPlayingVideo(true);
 
+    // Apply movie volume
+    playerRef.current.setVolume(movieVolume);
+
     // Track play count
     onUpdateProgress((prev) => ({ ...prev, plays: prev.plays + 1 }));
 
@@ -151,6 +164,13 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
         setIsPlayingVideo(false);
       }
     });
+  };
+
+  const handleVolumeSelect = (vol: number) => {
+    setMovieVolume(vol);
+    if (playerRef.current) {
+      playerRef.current.setVolume(vol);
+    }
   };
 
   const handlePause = () => {
@@ -449,17 +469,39 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
 
         {/* Speed buttons (0.5x / 0.75x / 1.0x) */}
         <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl">
+          <span className="text-[10px] font-semibold text-neutral-500 px-1">Speed</span>
           {[0.5, 0.75, 1.0].map((rate) => (
             <button
               key={rate}
               onClick={() => handleSpeedSelect(rate)}
-              className={`min-h-[40px] px-2.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+              className={`min-h-[36px] px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                 playbackSpeed === rate
                   ? 'bg-white text-neutral-950 shadow-xs border border-neutral-200'
                   : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
               {rate}×
+            </button>
+          ))}
+        </div>
+
+        {/* Movie Volume buttons (50% / 75% / 100%) */}
+        <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl" title="Movie Audio Volume during practice">
+          <span className="text-[10px] font-semibold text-neutral-500 px-1 flex items-center gap-0.5">
+            <Volume1 className="w-3 h-3 text-neutral-600" />
+            <span>Vol</span>
+          </span>
+          {[50, 75, 100].map((vol) => (
+            <button
+              key={vol}
+              onClick={() => handleVolumeSelect(vol)}
+              className={`min-h-[36px] px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                movieVolume === vol
+                  ? 'bg-white text-neutral-950 shadow-xs border border-neutral-200'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              {vol}%
             </button>
           ))}
         </div>
@@ -482,6 +524,59 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
           )}
         </div>
 
+        {/* Audio Clarity & Earphone Tips Card */}
+        <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-950 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 font-bold text-blue-900">
+              <Headphones className="w-4 h-4 text-blue-700" />
+              <span>Voice Clarity Tip / 선명한 녹음 팁</span>
+            </div>
+            <button
+              onClick={() => setShowAudioSettings(!showAudioSettings)}
+              className="text-[11px] font-semibold text-blue-800 hover:text-blue-950 underline cursor-pointer"
+            >
+              {showAudioSettings ? 'Hide Options / 닫기' : 'Mic Options / 마이크 옵션'}
+            </button>
+          </div>
+          <p className="text-[11px] text-blue-800 leading-snug">
+            🎧 <strong>Earphones recommended</strong>: Using earphones prevents video sound from bleeding into the mic so your voice is captured with 100% studio clarity!
+          </p>
+          <p className="text-[10px] text-blue-700/90 leading-tight">
+            이어폰을 착용하면 스피커 소리가 마이크로 재유입되지 않아 내 목소리가 더욱 또렷하게 녹음됩니다.
+          </p>
+
+          {showAudioSettings && (
+            <div className="pt-2 border-t border-blue-200/80 mt-1 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-neutral-800 text-[11px]">Mic Mode / 마이크 모드:</span>
+                <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-neutral-200">
+                  <button
+                    onClick={() => setMicProfile('clear_voice')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                      micProfile === 'clear_voice'
+                        ? 'bg-neutral-900 text-white'
+                        : 'text-neutral-600 hover:bg-neutral-100'
+                    }`}
+                    title="Disables browser acoustic ducking so your voice is never muffled during simultaneous movie playback"
+                  >
+                    Clear Voice (선명한 모드)
+                  </button>
+                  <button
+                    onClick={() => setMicProfile('standard')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                      micProfile === 'standard'
+                        ? 'bg-neutral-900 text-white'
+                        : 'text-neutral-600 hover:bg-neutral-100'
+                    }`}
+                  >
+                    Standard (일반 모드)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Mic Denied Notification */}
         {isMicDenied && (
           <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 flex items-start gap-2">
@@ -495,9 +590,18 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
           </div>
         )}
 
+        {/* Processing Indicator */}
+        {isProcessing && (
+          <div className="p-2.5 bg-neutral-900 text-white rounded-xl text-xs flex items-center justify-center gap-2 animate-pulse">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Normalizing & enhancing voice clarity... / 음성 선명도 최적화 중...</span>
+          </div>
+        )}
+
         {/* Record Button */}
         <button
           onClick={handleStartRecord}
+          disabled={isProcessing}
           className={`w-full min-h-[52px] py-3 px-4 rounded-xl font-bold text-base transition-all flex flex-col items-center justify-center cursor-pointer shadow-sm active:scale-[0.99] ${
             isRecording
               ? 'bg-red-600 hover:bg-red-700 text-white ring-4 ring-red-200'
@@ -517,19 +621,21 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             onClick={isPlayingRecorded ? stopRecordedAudio : playRecordedAudio}
-            disabled={!hasRecording}
+            disabled={!hasRecording || isProcessing}
             className={`min-h-[48px] py-2 px-3 rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all ${
               hasRecording
-                ? 'bg-white border-neutral-300 text-neutral-900 hover:bg-neutral-100 shadow-2xs'
+                ? isPlayingRecorded
+                  ? 'bg-neutral-900 text-white border-neutral-900 ring-2 ring-neutral-400 shadow-xs'
+                  : 'bg-white border-neutral-300 text-neutral-900 hover:bg-neutral-100 shadow-2xs'
                 : 'bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-60'
             }`}
           >
             <div className="flex items-center gap-1.5 text-xs font-bold">
-              <Volume2 className="w-3.5 h-3.5" />
-              <span>{isPlayingRecorded ? 'Stop Voice' : '▶ My Voice'}</span>
+              <Volume2 className={`w-3.5 h-3.5 ${isPlayingRecorded ? 'animate-bounce' : ''}`} />
+              <span>{isPlayingRecorded ? 'Stop Voice / 정지' : '▶ My Voice'}</span>
             </div>
-            <span className="text-[10px] text-neutral-500 font-normal">
-              {isPlayingRecorded ? '음성 정지' : '내 녹음 듣기'}
+            <span className={`text-[10px] font-normal ${isPlayingRecorded ? 'text-neutral-300' : 'text-neutral-500'}`}>
+              {isPlayingRecorded ? '재생 중...' : '내 녹음 듣기 (볼륨 부스트)'}
             </span>
           </button>
 
@@ -546,6 +652,32 @@ export const ShadowPracticeScreen: React.FC<Props> = ({
             </span>
           </button>
         </div>
+
+        {/* Voice Playback Volume Boost Selector */}
+        {hasRecording && (
+          <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-700">
+            <span className="font-medium flex items-center gap-1.5 text-neutral-800 text-[11px]">
+              <Volume2 className="w-3.5 h-3.5 text-neutral-600" />
+              Voice Playback Boost / 내 목소리 증폭:
+            </span>
+            <div className="flex gap-1">
+              {[1.0, 1.5, 2.0].map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setPlaybackBoost(b)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold cursor-pointer transition-colors ${
+                    playbackBoost === b
+                      ? 'bg-neutral-950 text-white shadow-2xs'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                  title={`${b}x volume boost`}
+                >
+                  {b}×
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 8. Self-Check (after recording or practicing) */}
